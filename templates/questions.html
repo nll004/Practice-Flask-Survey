@@ -7,13 +7,13 @@
 <a href="/">Restart</a>
 </nav>
 <h1>Survey</h1>
-<form action="/questions/{{id + 1}}" name="survey_form">
+<form action="/answer" method="POST">
     <h2>Question {{id + 1}}</h2>
     <p>{{ question }}</p>
         {% for option in answer %}
             <input type="radio" name="reply" value="{{ option }}">
             <label for="reply">{{ option }}</label>
         {% endfor %}
-    <button>Submit</button>
+    <button>Continue</button>
 </form>
 {% endblock %}

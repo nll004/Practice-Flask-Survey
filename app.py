@@ -1,45 +1,76 @@
-from flask import Flask, render_template, request, redirect
+from crypt import methods
+from flask import Flask, render_template, request, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
-from surveys import surveys
+from surveys import survey_collection
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "shhh"
+# app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 debug = DebugToolbarExtension(app)
 
 response_list = []
+survey_started = None
 
 @app.route('/')
-def funct():
-    ''' Render survery start page '''
+def survey_selection_page():
+    '''Allows you to select a survey and send your to survey start '''
 
     response_list.clear()
 
-    title = surveys['satisfaction'].title
-    instructions = surveys['satisfaction'].instructions
+    return render_template('home.html', surveys=survey_collection)
+
+@app.route('/start/')
+def start_survey():
+    '''Start of survey'''
+
+    # Get the selected survey and save it globally
+    global survey_started
+    survey_started = request.args.get('survey')
+
+    title = survey_collection[survey_started].title
+    instructions = survey_collection[survey_started].instructions
 
     return render_template('start.html', title= title, info= instructions)
 
+@app.route("/answer", methods=["POST"])
+def handle_answer():
+    """Save response and redirect to next question."""
 
-@app.route('/questions/<num>')
+    # get the response choice
+    choice = request.form['reply']
+
+    # add this response to the session
+    response_list.append(choice)
+    session["responses"] = response_list
+
+    if (len(response_list) == len(survey_collection[survey_started].questions)):
+        # They've answered all the questions! Thank them.
+        return redirect("/complete")
+    else:
+        return redirect(f"/questions/{len(response_list)}")
+
+
+@app.route('/questions/<int:num>/')
 def questions(num):
     '''Ask question and save result'''
 
-    num = len(response_list)
-    question = surveys['satisfaction'].questions[num].question
-    answer = surveys['satisfaction'].questions[num].choices
+    # Trying to access questions out of order.
+    if (len(response_list) != num):
+        flash(f"Invalid question id: {num}.")
+        return redirect(f"/questions/{len(response_list)}")
 
+    # passing questions and answer selections to template
+    answer = survey_collection[survey_started].questions[num].choices
+    question = survey_collection[survey_started].questions[num].question
 
-    # get answers from form
-    get_ans = request.form.get('survey_form')
+    return render_template('questions.html', id= num, question= question, answer=answer)
 
-    # store answers in list
-    response_list.append(get_ans)
+@app.route('/complete')
+def survey_end():
+    '''Save responses and the finished survey in cookies'''
 
-    if (len(response_list) == len(surveys['satisfaction'].questions)):
-        # They've answered all the questions! Thank them.
-        redirect('/complete')
-        return render_template("complete.html")
+    session["responses"] = response_list
+    session['finished'] = survey_started
 
-    else:
-        return render_template('questions.html', id= num, question= question, answer=answer)
+    return render_template('/complete.html')

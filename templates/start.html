@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block page_tile %} Survey Home {% endblock %}
+{% block page_tile %} Start Survey {% endblock %}
 
 {% block page_content %}
 <h1>Survey</h1>
 <form action="/questions/0">
     <h2>{{ title }}</h2>
     <p>{{ info }}</p>
-    <button>Start</button>
+    <button>Start Quiz</button>
 </form>
 {% endblock %}

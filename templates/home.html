@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block page_tile %} Home {% endblock %}
+
+{% block page_content %}
+<h1>Select a Survey</h1>
+<p>Select one of the following quizes:</p>
+<form action="/start">
+    {% for surv in surveys %}
+        <label for="survey">{{ surv.capitalize() }}</label>
+        <input type="radio" name="survey" value="{{ surv }}"/>
+    {% endfor %}
+    <button>Start</button>
+</form>
+{% endblock %}
